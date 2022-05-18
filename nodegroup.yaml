@@ -1,0 +1,36 @@
+# An advanced example of ClusterConfig object with customised nodegroups:
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-eks-201
+  region: us-east-1
+nodeGroups:
+  - name: ng3-private-b
+    instanceType: t2.medium
+    minSize: 0
+    maxSize: 5
+    desiredCapacity: 1
+    labels:
+      nodegroup-type: very-special-science-workloads
+    asgMetricsCollection:
+      - granularity: 1Minute
+        metrics:
+          - GroupMinSize
+          - GroupMaxSize
+          - GroupDesiredCapacity
+          - GroupInServiceInstances
+          - GroupPendingInstances
+          - GroupStandbyInstances
+          - GroupTerminatingInstances
+          - GroupTotalInstances
+    taints:
+      - key: special
+        value: "true"
+        effect: NoSchedule
+    privateNetworking: true
+    availabilityZones: ["us-east-1c"] # use single AZ to optimise data transfer between instances
+    preBootstrapCommands:
+      # disable hyperthreading
+      - "for n in $(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list | cut -s -d, -f2- | tr ',' '\n' | sort -un); do echo 0 > /sys/devices/system/cpu/cpu${n}/online; done"
